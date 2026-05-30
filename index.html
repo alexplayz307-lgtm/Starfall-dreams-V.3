@@ -1,0 +1,1090 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Starfall Dreams Development</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;600;700&family=Inter:wght@300;400;500;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+
+/* ── TOKENS ── */
+:root{
+  --bg:#07080f;
+  --bg2:#0b0d18;
+  --bg3:#0f1120;
+  --surface:#13162a;
+  --border:#1e2240;
+  --border2:#252850;
+  --gold:#c9a84c;
+  --gold2:#e2c97e;
+  --gold-dim:rgba(201,168,76,.12);
+  --gold-glow:rgba(201,168,76,.25);
+  --blue:#1a1f4e;
+  --blue2:#232866;
+  --silver:#8a92b2;
+  --silver2:#c4cbe8;
+  --text:#d8ddf0;
+  --text2:#8a92b2;
+  --text3:#5a6080;
+  --white:#f0f2ff;
+  --radius:2px;
+  --font-head:'Cormorant Garamond',serif;
+  --font-body:'Inter',sans-serif;
+  --font-mono:'Space Mono',monospace;
+  --transition:.28s cubic-bezier(.4,0,.2,1);
+}
+
+body{background:var(--bg);color:var(--text);font-family:var(--font-body);overflow-x:hidden;min-height:100vh}
+
+/* ── SCROLL PROGRESS BAR (Feature 1) ── */
+#progressBar{position:fixed;top:0;left:0;height:2px;background:linear-gradient(90deg,var(--gold),var(--gold2));width:0%;z-index:10000;transition:width .1s linear;box-shadow:0 0 8px var(--gold-glow)}
+
+/* ── CURSOR ── */
+.cursor{width:8px;height:8px;border-radius:50%;background:var(--gold);position:fixed;pointer-events:none;z-index:9999;transform:translate(-50%,-50%);transition:width .2s,height .2s,opacity .2s}
+.cursor-ring{width:32px;height:32px;border-radius:50%;border:1px solid rgba(201,168,76,.4);position:fixed;pointer-events:none;z-index:9998;transform:translate(-50%,-50%);transition:left .12s ease,top .12s ease,width .25s,height .25s}
+
+/* ── NAV ── */
+nav{position:fixed;top:2px;left:0;right:0;z-index:1000;padding:22px 64px;display:flex;align-items:center;justify-content:space-between;transition:all .3s}
+nav.scrolled{background:rgba(7,8,15,.92);backdrop-filter:blur(20px);border-bottom:1px solid var(--border);padding:14px 64px}
+.nav-logo{font-family:var(--font-head);font-size:1.3rem;font-weight:600;color:var(--gold2);letter-spacing:.04em;text-decoration:none;display:flex;align-items:center;gap:10px}
+.nav-logo-star{font-size:1rem;animation:starSpin 8s linear infinite}
+@keyframes starSpin{0%{transform:rotate(0deg)}100%{transform:rotate(360deg)}}
+.nav-links{display:flex;align-items:center;gap:32px;list-style:none}
+.nav-links a{font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--text2);text-decoration:none;transition:color var(--transition);font-weight:500}
+.nav-links a:hover{color:var(--gold2)}
+.nav-cta{background:var(--gold);color:#07080f;font-family:var(--font-mono);font-size:.65rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;padding:9px 20px;border:none;cursor:pointer;transition:all var(--transition);text-decoration:none}
+.nav-cta:hover{background:var(--gold2);box-shadow:0 0 20px var(--gold-glow)}
+
+/* ── HERO ── */
+.hero{min-height:100vh;display:flex;align-items:center;justify-content:center;text-align:center;position:relative;overflow:hidden;padding:120px 32px 80px}
+canvas#stars{position:absolute;inset:0;z-index:0;pointer-events:none}
+.hero-content{position:relative;z-index:1;max-width:780px}
+.hero-eyebrow{font-family:var(--font-mono);font-size:.65rem;letter-spacing:.35em;text-transform:uppercase;color:var(--gold);margin-bottom:24px;opacity:0;animation:fadeUp .8s .2s forwards}
+.hero-title{font-family:var(--font-head);font-size:clamp(3.2rem,9vw,7.5rem);font-weight:300;line-height:.95;letter-spacing:-.01em;color:var(--white);margin-bottom:8px;opacity:0;animation:fadeUp .8s .35s forwards}
+.hero-title em{font-style:italic;color:var(--gold2)}
+.hero-title strong{font-weight:700;display:block}
+.hero-sub{font-size:1.05rem;color:var(--text2);line-height:1.8;max-width:500px;margin:24px auto 44px;font-weight:300;opacity:0;animation:fadeUp .8s .5s forwards}
+.hero-actions{display:flex;gap:16px;justify-content:center;flex-wrap:wrap;opacity:0;animation:fadeUp .8s .65s forwards}
+.hero-scroll{position:absolute;bottom:36px;left:50%;transform:translateX(-50%);z-index:1;font-family:var(--font-mono);font-size:.58rem;letter-spacing:.24em;text-transform:uppercase;color:var(--text3);opacity:0;animation:fadeUp .8s 1s forwards}
+.hero-scroll::after{content:'';display:block;width:1px;height:40px;background:linear-gradient(var(--gold),transparent);margin:10px auto 0}
+.hero-orb{position:absolute;width:700px;height:700px;border-radius:50%;background:radial-gradient(circle,rgba(201,168,76,.05) 0%,rgba(26,31,78,.04) 40%,transparent 70%);top:50%;left:50%;transform:translate(-50%,-50%);pointer-events:none;animation:orbPulse 6s ease-in-out infinite}
+@keyframes orbPulse{0%,100%{transform:translate(-50%,-50%) scale(1)}50%{transform:translate(-50%,-50%) scale(1.12)}}
+
+/* ── BUTTONS ── */
+.btn{display:inline-block;padding:13px 30px;font-family:var(--font-mono);font-size:.68rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;text-decoration:none;border:1px solid transparent;cursor:pointer;transition:all var(--transition)}
+.btn-gold{background:var(--gold);color:#07080f;border-color:var(--gold)}
+.btn-gold:hover{background:var(--gold2);box-shadow:0 4px 24px var(--gold-glow)}
+.btn-outline{background:transparent;color:var(--gold);border-color:var(--gold)}
+.btn-outline:hover{background:var(--gold-dim)}
+
+/* ── SECTION BASE ── */
+.section{padding:110px 64px;max-width:1160px;margin:0 auto;position:relative;z-index:1}
+.section-tag{font-family:var(--font-mono);font-size:.6rem;letter-spacing:.32em;text-transform:uppercase;color:var(--gold);margin-bottom:14px;display:block}
+.section-title{font-family:var(--font-head);font-size:clamp(2rem,5vw,3.6rem);font-weight:300;color:var(--white);line-height:1.05;margin-bottom:18px}
+.section-title em{font-style:italic;color:var(--gold2)}
+.section-lead{font-size:.97rem;color:var(--text2);line-height:1.85;max-width:480px;font-weight:300;margin-bottom:60px}
+.divider-line{border:none;border-top:1px solid var(--border);margin:0}
+
+/* ── FADE ANIMATIONS ── */
+@keyframes fadeUp{from{opacity:0;transform:translateY(28px)}to{opacity:1;transform:translateY(0)}}
+.reveal{opacity:0;transform:translateY(32px);transition:opacity .8s ease,transform .8s ease}
+.reveal.from-left{transform:translateX(-32px)}
+.reveal.from-right{transform:translateX(32px)}
+.reveal.visible{opacity:1;transform:translate(0)}
+
+/* ── FEATURE 2: SCROLL PROGRESS (top bar already defined) ── */
+
+/* ── FEATURE 3: BADGE / TRUST STRIP ── */
+.trust-strip{background:var(--bg2);border-top:1px solid var(--border);border-bottom:1px solid var(--border);padding:0 64px}
+.trust-inner{display:flex;align-items:center;justify-content:space-between;gap:0;overflow-x:auto;padding:20px 0}
+.trust-item{display:flex;align-items:center;gap:10px;flex-shrink:0;padding:0 28px;border-right:1px solid var(--border)}
+.trust-item:last-child{border-right:none}
+.trust-icon{font-size:1.1rem;color:var(--gold)}
+.trust-text{font-family:var(--font-mono);font-size:.6rem;letter-spacing:.14em;text-transform:uppercase;color:var(--text2)}
+.trust-text strong{color:var(--white);display:block;font-size:.68rem;margin-bottom:1px}
+
+/* ── FEATURE 4: FLIP CARD SERVICES ── */
+.services-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:1px;background:var(--border)}
+.flip-card{height:280px;perspective:1000px;cursor:pointer;background:var(--bg2)}
+.flip-inner{position:relative;width:100%;height:100%;transform-style:preserve-3d;transition:transform .7s cubic-bezier(.4,0,.2,1)}
+.flip-card:hover .flip-inner,.flip-card.flipped .flip-inner{transform:rotateY(180deg)}
+.flip-front,.flip-back{position:absolute;inset:0;backface-visibility:hidden;padding:44px 32px;display:flex;flex-direction:column;justify-content:flex-end}
+.flip-front{background:var(--bg2)}
+.flip-back{background:var(--surface);border-top:2px solid var(--gold);transform:rotateY(180deg);justify-content:center;gap:12px}
+.flip-num{font-family:var(--font-mono);font-size:.6rem;color:var(--gold);letter-spacing:.22em;margin-bottom:10px}
+.flip-title{font-family:var(--font-head);font-size:1.5rem;font-weight:600;color:var(--white);line-height:1.1}
+.flip-tag{font-family:var(--font-mono);font-size:.55rem;letter-spacing:.16em;text-transform:uppercase;padding:3px 8px;border:1px solid var(--border2);color:var(--gold);margin-top:12px;width:fit-content}
+.flip-back-title{font-family:var(--font-head);font-size:1.2rem;font-weight:600;color:var(--gold2)}
+.flip-back-desc{font-size:.84rem;color:var(--text2);line-height:1.72;font-weight:300}
+.flip-back-detail{font-family:var(--font-mono);font-size:.58rem;letter-spacing:.1em;color:var(--silver);margin-top:4px}
+.flip-icon{font-size:1.8rem;margin-bottom:8px;display:block}
+
+/* ── STATS (Feature 5: Animated Counters) ── */
+.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);background:var(--bg2);border:1px solid var(--border)}
+.stat-cell{padding:52px 32px;text-align:center;border-right:1px solid var(--border);position:relative;overflow:hidden;transition:background var(--transition)}
+.stat-cell:last-child{border-right:none}
+.stat-cell:hover{background:var(--surface)}
+.stat-cell::after{content:'';position:absolute;bottom:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--gold),transparent);transform:scaleX(0);transition:transform .5s}
+.stat-cell:hover::after{transform:scaleX(1)}
+.stat-num{font-family:var(--font-head);font-size:3.2rem;font-weight:700;color:var(--gold2);line-height:1;margin-bottom:8px}
+.stat-label{font-family:var(--font-mono);font-size:.6rem;letter-spacing:.18em;text-transform:uppercase;color:var(--text2)}
+
+/* ── FEATURE 6: TABBED COMMISSION TIERS ── */
+.tier-tabs{display:flex;gap:0;border-bottom:1px solid var(--border);margin-bottom:0}
+.tier-tab{background:none;border:none;font-family:var(--font-mono);font-size:.65rem;letter-spacing:.18em;text-transform:uppercase;color:var(--text2);padding:14px 28px;cursor:pointer;transition:all var(--transition);border-bottom:2px solid transparent;margin-bottom:-1px}
+.tier-tab:hover{color:var(--gold)}
+.tier-tab.active{color:var(--gold2);border-bottom-color:var(--gold)}
+.tier-panels{border:1px solid var(--border);border-top:none}
+.tier-panel{display:none;padding:44px}
+.tier-panel.active{display:grid;grid-template-columns:1fr 1fr;gap:44px}
+.tier-panel-left{}
+.tier-name{font-family:var(--font-head);font-size:2rem;font-weight:600;color:var(--white);margin-bottom:6px}
+.tier-price{font-family:var(--font-mono);font-size:1.1rem;color:var(--gold2);margin-bottom:18px;letter-spacing:.06em}
+.tier-desc{font-size:.88rem;color:var(--text2);line-height:1.78;margin-bottom:24px;font-weight:300}
+.tier-features{list-style:none;display:flex;flex-direction:column;gap:9px}
+.tier-features li{font-size:.84rem;color:var(--text);padding-left:18px;position:relative;line-height:1.55}
+.tier-features li::before{content:'';position:absolute;left:0;top:8px;width:6px;height:1px;background:var(--gold)}
+.tier-panel-right{display:flex;flex-direction:column;gap:12px}
+.tier-detail-box{background:var(--bg2);border:1px solid var(--border);padding:20px 22px}
+.tier-detail-label{font-family:var(--font-mono);font-size:.57rem;letter-spacing:.18em;text-transform:uppercase;color:var(--text3);margin-bottom:5px}
+.tier-detail-val{font-size:.9rem;color:var(--text);font-weight:500}
+.tier-badge{display:inline-block;font-family:var(--font-mono);font-size:.55rem;letter-spacing:.18em;text-transform:uppercase;padding:3px 9px;border:1px solid;margin-bottom:14px;width:fit-content}
+.tier-bronze .tier-badge{color:#cd7f32;border-color:#cd7f32}
+.tier-silver .tier-badge{color:#b0b8c8;border-color:#b0b8c8}
+.tier-gold .tier-badge{color:var(--gold2);border-color:var(--gold2)}
+
+/* ── FEATURE 7: TEAM HOVER CARDS ── */
+.team-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:1px;background:var(--border)}
+.team-card{background:var(--bg2);padding:44px 28px;text-align:center;position:relative;overflow:hidden;transition:background var(--transition)}
+.team-card::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,var(--gold-dim),transparent);opacity:0;transition:opacity var(--transition)}
+.team-card:hover::before{opacity:1}
+.team-card:hover{background:var(--surface)}
+.team-av{width:72px;height:72px;border-radius:50%;background:var(--surface);border:2px solid var(--border2);margin:0 auto 18px;display:flex;align-items:center;justify-content:center;font-family:var(--font-mono);font-size:1.1rem;font-weight:700;color:var(--gold);transition:border-color var(--transition),box-shadow var(--transition)}
+.team-card:hover .team-av{border-color:var(--gold);box-shadow:0 0 22px var(--gold-glow)}
+.team-name{font-family:var(--font-head);font-size:1.1rem;font-weight:600;color:var(--white);margin-bottom:4px}
+.team-role{font-family:var(--font-mono);font-size:.58rem;letter-spacing:.2em;text-transform:uppercase;color:var(--gold);margin-bottom:12px}
+.team-bio{font-size:.82rem;color:var(--text2);line-height:1.65;font-weight:300;margin-bottom:0;max-height:0;overflow:hidden;transition:max-height .4s ease,margin .3s}
+.team-card:hover .team-bio{max-height:100px;margin-bottom:14px}
+.team-tags{display:flex;gap:5px;flex-wrap:wrap;justify-content:center;max-height:0;overflow:hidden;transition:max-height .4s ease}
+.team-card:hover .team-tags{max-height:60px}
+.team-tag{font-family:var(--font-mono);font-size:.5rem;letter-spacing:.1em;text-transform:uppercase;padding:2px 7px;border:1px solid var(--border2);color:var(--text3)}
+
+/* ── FEATURE 8: TIMELINE ── */
+.timeline{position:relative;padding-left:0}
+.timeline::before{content:'';position:absolute;left:50%;top:0;bottom:0;width:1px;background:linear-gradient(var(--border),var(--gold),var(--border));transform:translateX(-50%)}
+.tl-item{display:grid;grid-template-columns:1fr 48px 1fr;gap:0;margin-bottom:0;position:relative}
+.tl-left{padding:0 40px 60px 0;text-align:right}
+.tl-right{padding:0 0 60px 40px}
+.tl-center{display:flex;flex-direction:column;align-items:center;padding-top:4px}
+.tl-dot{width:14px;height:14px;border-radius:50%;background:var(--bg2);border:2px solid var(--gold);flex-shrink:0;position:relative;z-index:1;transition:background var(--transition),box-shadow var(--transition)}
+.tl-item:hover .tl-dot{background:var(--gold);box-shadow:0 0 14px var(--gold-glow)}
+.tl-date{font-family:var(--font-mono);font-size:.6rem;letter-spacing:.2em;text-transform:uppercase;color:var(--gold);margin-bottom:8px}
+.tl-title{font-family:var(--font-head);font-size:1.2rem;font-weight:600;color:var(--white);margin-bottom:7px}
+.tl-desc{font-size:.83rem;color:var(--text2);line-height:1.7;font-weight:300}
+.tl-item.right .tl-left{opacity:0}
+.tl-item.right .tl-right{padding:0 0 60px 40px}
+.tl-item.left .tl-right{opacity:0}
+
+/* ── FEATURE 9: FLOATING ACTION DOCK ── */
+.fab-dock{position:fixed;bottom:36px;right:36px;z-index:500;display:flex;flex-direction:column;align-items:flex-end;gap:10px}
+.fab-main{width:52px;height:52px;background:var(--gold);border:none;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:1.2rem;transition:all var(--transition);box-shadow:0 4px 24px var(--gold-glow);flex-shrink:0}
+.fab-main:hover{background:var(--gold2);transform:scale(1.08)}
+.fab-main.open{transform:rotate(45deg)}
+.fab-items{display:flex;flex-direction:column;align-items:flex-end;gap:8px;overflow:hidden;max-height:0;transition:max-height .4s cubic-bezier(.4,0,.2,1)}
+.fab-dock.open .fab-items{max-height:300px}
+.fab-item{display:flex;align-items:center;gap:10px;animation:none;opacity:0;transform:translateX(20px);transition:opacity .3s,transform .3s}
+.fab-dock.open .fab-item{opacity:1;transform:translateX(0)}
+.fab-dock.open .fab-item:nth-child(1){transition-delay:.05s}
+.fab-dock.open .fab-item:nth-child(2){transition-delay:.1s}
+.fab-dock.open .fab-item:nth-child(3){transition-delay:.15s}
+.fab-dock.open .fab-item:nth-child(4){transition-delay:.2s}
+.fab-label{font-family:var(--font-mono);font-size:.6rem;letter-spacing:.12em;text-transform:uppercase;color:var(--white);background:rgba(7,8,15,.92);border:1px solid var(--border);padding:6px 12px;white-space:nowrap}
+.fab-icon-btn{width:42px;height:42px;background:var(--surface);border:1px solid var(--border2);border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:.95rem;transition:all var(--transition);flex-shrink:0}
+.fab-icon-btn:hover{background:var(--gold);border-color:var(--gold)}
+
+/* ── ADMIN / ANNOUNCEMENTS ── */
+.ann-gate{border:1px solid var(--border);background:var(--bg2);padding:40px;max-width:440px;margin:0 auto;text-align:center}
+.ann-gate h3{font-family:var(--font-mono);font-size:.7rem;letter-spacing:.2em;text-transform:uppercase;color:var(--gold);margin-bottom:8px}
+.ann-gate p{font-size:.84rem;color:var(--text2);margin-bottom:20px;font-weight:300}
+.ann-input{width:100%;background:var(--bg);border:1px solid var(--border);color:var(--white);font-family:var(--font-mono);font-size:.78rem;padding:12px 14px;outline:none;margin-bottom:10px;transition:border-color var(--transition)}
+.ann-input:focus{border-color:var(--gold)}
+.ann-input.err{border-color:#e84a4a}
+.ann-err-msg{font-family:var(--font-mono);font-size:.6rem;color:#e84a4a;margin-bottom:8px;display:none}
+.ann-panel{display:none}
+.ann-panel.visible{display:block}
+.ann-form{border:1px solid var(--border);background:var(--bg2);padding:32px;margin-bottom:24px}
+.ann-form-title{font-family:var(--font-mono);font-size:.65rem;letter-spacing:.2em;text-transform:uppercase;color:var(--gold);margin-bottom:18px}
+.form-row{margin-bottom:12px}
+.form-row label{display:block;font-family:var(--font-mono);font-size:.58rem;letter-spacing:.16em;text-transform:uppercase;color:var(--text3);margin-bottom:5px}
+.form-row input,.form-row textarea,.form-row select{width:100%;background:var(--bg);border:1px solid var(--border);color:var(--white);font-family:var(--font-mono);font-size:.76rem;padding:10px 13px;outline:none;resize:vertical;transition:border-color var(--transition)}
+.form-row input:focus,.form-row textarea:focus,.form-row select:focus{border-color:var(--gold)}
+.form-row select option{background:var(--bg2)}
+.ann-list{display:flex;flex-direction:column;gap:1px;background:var(--border);border:1px solid var(--border)}
+.ann-empty{background:var(--bg2);padding:40px;text-align:center;font-family:var(--font-mono);font-size:.63rem;color:var(--text3);letter-spacing:.14em}
+.ann-card{background:var(--bg2);padding:24px 28px;animation:fadeUp .4s ease forwards}
+.ann-card-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px;flex-wrap:wrap}
+.ann-type-pill{font-family:var(--font-mono);font-size:.54rem;letter-spacing:.16em;text-transform:uppercase;padding:2px 8px;border:1px solid}
+.pill-update{color:#4ad4e8;border-color:#4ad4e8}
+.pill-release{color:#4ae87a;border-color:#4ae87a}
+.pill-maintenance{color:var(--gold);border-color:var(--gold)}
+.pill-general{color:var(--text3);border-color:var(--text3)}
+.ann-time{font-family:var(--font-mono);font-size:.54rem;color:var(--text3)}
+.ann-del{background:none;border:none;color:var(--text3);font-family:var(--font-mono);font-size:.6rem;cursor:pointer;transition:color var(--transition)}
+.ann-del:hover{color:#e84a4a}
+.ann-title-txt{font-family:var(--font-head);font-size:1.1rem;font-weight:600;color:var(--white);margin-bottom:6px}
+.ann-body-txt{font-size:.84rem;color:var(--text2);line-height:1.72;white-space:pre-wrap;font-weight:300}
+.btn-post-ann{background:var(--gold);color:#07080f;border:none;padding:10px 22px;font-family:var(--font-mono);font-size:.68rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;transition:all var(--transition)}
+.btn-post-ann:hover{background:var(--gold2)}
+.btn-clear-ann{background:transparent;color:#e84a4a;border:1px solid #e84a4a;padding:10px 16px;font-family:var(--font-mono);font-size:.64rem;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;transition:all var(--transition)}
+.btn-clear-ann:hover{background:#e84a4a;color:#fff}
+.btn-logout-ann{background:transparent;color:var(--text3);border:1px solid var(--border2);padding:10px 14px;font-family:var(--font-mono);font-size:.62rem;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;transition:all var(--transition);margin-left:auto}
+.btn-logout-ann:hover{color:var(--white);border-color:var(--text3)}
+.form-actions{display:flex;gap:9px;margin-top:14px;flex-wrap:wrap;align-items:center}
+
+/* ── FEATURE 10: CONTACT MODAL ── */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:5000;display:flex;align-items:center;justify-content:center;padding:20px;opacity:0;pointer-events:none;transition:opacity .3s}
+.modal-overlay.open{opacity:1;pointer-events:all}
+.modal-box{background:var(--bg2);border:1px solid var(--border);border-top:2px solid var(--gold);width:100%;max-width:560px;max-height:90vh;overflow-y:auto;transform:translateY(20px) scale(.97);transition:transform .35s cubic-bezier(.22,1,.36,1)}
+.modal-overlay.open .modal-box{transform:translateY(0) scale(1)}
+.modal-head{padding:30px 34px 0;display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+.modal-eyebrow{font-family:var(--font-mono);font-size:.58rem;letter-spacing:.26em;text-transform:uppercase;color:var(--gold);margin-bottom:6px}
+.modal-title{font-family:var(--font-head);font-size:1.8rem;font-weight:300;color:var(--white);line-height:1.05}
+.modal-title em{font-style:italic;color:var(--gold2)}
+.modal-close{background:none;border:1px solid var(--border);color:var(--text2);font-family:var(--font-mono);font-size:.6rem;letter-spacing:.12em;padding:7px 12px;cursor:pointer;transition:all var(--transition);text-transform:uppercase;flex-shrink:0}
+.modal-close:hover{border-color:var(--gold);color:var(--gold)}
+.modal-body{padding:22px 34px 34px}
+.modal-lead{font-size:.86rem;color:var(--text2);line-height:1.75;margin-bottom:24px;font-weight:300}
+.modal-service-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:20px}
+.ms-btn{background:var(--bg);border:1px solid var(--border);color:var(--text2);font-family:var(--font-mono);font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;padding:11px 12px;cursor:pointer;transition:all var(--transition);text-align:left}
+.ms-btn:hover,.ms-btn.sel{background:var(--gold);color:#07080f;border-color:var(--gold)}
+.modal-input,.modal-textarea{width:100%;background:var(--bg);border:1px solid var(--border);color:var(--white);font-family:var(--font-mono);font-size:.76rem;padding:12px 14px;outline:none;resize:vertical;transition:border-color var(--transition);margin-bottom:12px}
+.modal-input:focus,.modal-textarea:focus{border-color:var(--gold)}
+.modal-f-label{font-family:var(--font-mono);font-size:.58rem;letter-spacing:.16em;text-transform:uppercase;color:var(--text3);display:block;margin-bottom:6px}
+.modal-submit{width:100%;background:var(--gold);color:#07080f;border:none;padding:14px;font-family:var(--font-mono);font-size:.72rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;cursor:pointer;transition:all var(--transition);margin-top:6px}
+.modal-submit:hover{background:var(--gold2);box-shadow:0 4px 20px var(--gold-glow)}
+.modal-success{display:none;text-align:center;padding:28px 0 12px}
+.modal-success.show{display:block}
+.modal-success-icon{font-size:2.4rem;margin-bottom:14px}
+.modal-success-title{font-family:var(--font-head);font-size:1.4rem;font-weight:600;color:var(--gold2);margin-bottom:8px}
+.modal-success-txt{font-size:.84rem;color:var(--text2);line-height:1.72;font-weight:300}
+.modal-discord-hint{display:flex;align-items:center;gap:12px;background:var(--bg);border:1px solid var(--border);padding:14px 16px;margin-top:14px}
+.modal-discord-hint p{font-family:var(--font-mono);font-size:.6rem;color:var(--text2);letter-spacing:.06em;line-height:1.6;flex:1}
+
+/* ── CHAT ── */
+.chat-bubble-btn{position:fixed;bottom:36px;left:36px;z-index:400;width:50px;height:50px;background:var(--surface);border:1px solid var(--border2);border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all var(--transition);font-size:1.1rem}
+.chat-bubble-btn:hover{background:var(--gold);border-color:var(--gold)}
+.chat-unread{position:absolute;top:-3px;right:-3px;width:14px;height:14px;background:#e84a4a;border-radius:50%;font-family:var(--font-mono);font-size:.52rem;color:#fff;display:none;align-items:center;justify-content:center}
+.chat-unread.show{display:flex}
+.chat-win{position:fixed;bottom:98px;left:36px;z-index:400;width:310px;height:400px;background:var(--bg2);border:1px solid var(--border);display:flex;flex-direction:column;transform:scale(.92) translateY(18px);opacity:0;pointer-events:none;transition:all .28s;transform-origin:bottom left}
+.chat-win.open{transform:scale(1) translateY(0);opacity:1;pointer-events:all}
+.chat-win-head{background:var(--bg);border-bottom:1px solid var(--border);padding:14px 18px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.chat-win-title{font-family:var(--font-mono);font-size:.68rem;font-weight:700;color:var(--gold);letter-spacing:.1em}
+.chat-win-sub{font-family:var(--font-mono);font-size:.55rem;color:var(--text3);margin-top:2px;display:flex;align-items:center;gap:5px}
+.chat-online-dot{width:5px;height:5px;border-radius:50%;background:#4ae87a;animation:pulse-dot 2s infinite}
+@keyframes pulse-dot{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(.8)}}
+.chat-win-close{background:none;border:none;color:var(--text3);font-family:var(--font-mono);font-size:.64rem;cursor:pointer;transition:color var(--transition)}
+.chat-win-close:hover{color:var(--gold)}
+.chat-msgs{flex:1;overflow-y:auto;padding:14px 16px;display:flex;flex-direction:column;gap:9px}
+.chat-msgs::-webkit-scrollbar{width:2px}
+.chat-msgs::-webkit-scrollbar-thumb{background:var(--border)}
+.chat-msg{max-width:82%}
+.chat-msg.them{align-self:flex-start}
+.chat-msg.me{align-self:flex-end}
+.chat-bubble-msg{padding:9px 13px;font-size:.8rem;line-height:1.55}
+.chat-msg.them .chat-bubble-msg{background:var(--surface);color:var(--text);border:1px solid var(--border)}
+.chat-msg.me .chat-bubble-msg{background:var(--gold);color:#07080f}
+.chat-msg-time{font-family:var(--font-mono);font-size:.5rem;color:var(--text3);margin-top:3px;text-align:right}
+.chat-msg.them .chat-msg-time{text-align:left}
+.chat-name-tag{font-family:var(--font-mono);font-size:.52rem;color:var(--text3);margin-bottom:3px;letter-spacing:.08em}
+.chat-input-row{border-top:1px solid var(--border);padding:10px 13px;display:flex;gap:7px;flex-shrink:0}
+.chat-name-in{width:76px;background:var(--bg);border:1px solid var(--border);color:var(--white);font-family:var(--font-mono);font-size:.68rem;padding:8px 9px;outline:none;transition:border-color var(--transition);flex-shrink:0}
+.chat-name-in:focus{border-color:var(--gold)}
+.chat-text-in{flex:1;background:var(--bg);border:1px solid var(--border);color:var(--white);font-family:var(--font-mono);font-size:.68rem;padding:8px 9px;outline:none;transition:border-color var(--transition);resize:none}
+.chat-text-in:focus{border-color:var(--gold)}
+.chat-send-btn{background:var(--gold);border:none;color:#07080f;font-family:var(--font-mono);font-size:.62rem;font-weight:700;padding:8px 11px;cursor:pointer;transition:background var(--transition);text-transform:uppercase;flex-shrink:0}
+.chat-send-btn:hover{background:var(--gold2)}
+
+/* ── REVIEWS ── */
+.reviews-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:1px;background:var(--border)}
+.review-card{background:var(--bg2);padding:34px 30px;transition:background var(--transition)}
+.review-card:hover{background:var(--surface)}
+.rv-stars{color:var(--gold);font-size:.8rem;letter-spacing:.1em;margin-bottom:14px}
+.rv-text{font-size:.87rem;color:var(--text2);line-height:1.8;margin-bottom:18px;font-weight:300;font-style:italic}
+.rv-author{font-family:var(--font-mono);font-size:.6rem;color:var(--text3);letter-spacing:.14em;text-transform:uppercase}
+.rv-author span{color:var(--gold)}
+
+/* ── FAQ ── */
+.faq-list{border:1px solid var(--border)}
+.faq-item{border-bottom:1px solid var(--border)}
+.faq-item:last-child{border-bottom:none}
+.faq-q{width:100%;background:var(--bg2);border:none;padding:20px 30px;display:flex;align-items:center;justify-content:space-between;gap:16px;cursor:pointer;transition:background var(--transition);text-align:left}
+.faq-q:hover{background:var(--surface)}
+.faq-q span{font-family:var(--font-body);font-size:.9rem;font-weight:500;color:var(--white)}
+.faq-arrow{font-family:var(--font-mono);font-size:.65rem;color:var(--gold);flex-shrink:0;transition:transform .28s}
+.faq-item.open .faq-arrow{transform:rotate(90deg)}
+.faq-a{background:var(--bg);max-height:0;overflow:hidden;transition:max-height .38s ease,padding .25s}
+.faq-item.open .faq-a{max-height:200px;padding:16px 30px 22px}
+.faq-a p{font-size:.85rem;color:var(--text2);line-height:1.82;font-weight:300}
+
+/* ── COLLAB SECTION ── */
+.collabs-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:1px;background:var(--border)}
+.collab-card{background:var(--bg2);padding:36px 28px;position:relative;overflow:hidden;transition:background var(--transition)}
+.collab-card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:1px;background:var(--gold);transform:scaleY(0);transition:transform var(--transition)}
+.collab-card:hover::before{transform:scaleY(1)}
+.collab-card:hover{background:var(--surface)}
+.collab-status{display:inline-block;font-family:var(--font-mono);font-size:.54rem;letter-spacing:.18em;text-transform:uppercase;padding:3px 8px;border:1px solid;margin-bottom:14px}
+.cs-open{color:#4ae87a;border-color:#4ae87a}
+.cs-interest{color:var(--gold);border-color:var(--gold)}
+.collab-title{font-family:var(--font-head);font-size:1.2rem;font-weight:600;color:var(--white);margin-bottom:8px}
+.collab-desc{font-size:.84rem;color:var(--text2);line-height:1.72;font-weight:300}
+
+/* ── PARTNERS ── */
+.partners-row{display:flex;border:1px solid var(--border)}
+.partner-card{flex:1;padding:40px 32px;background:var(--bg2);border-right:1px solid var(--border);position:relative;overflow:hidden;transition:background var(--transition)}
+.partner-card:last-child{border-right:none}
+.partner-card::after{content:'';position:absolute;left:0;top:0;bottom:0;width:1px;background:var(--gold);transform:scaleY(0);transition:transform var(--transition)}
+.partner-card:hover{background:var(--surface)}
+.partner-card:hover::after{transform:scaleY(1)}
+.partner-badge{font-family:var(--font-mono);font-size:.56rem;letter-spacing:.2em;text-transform:uppercase;color:var(--text3);margin-bottom:8px}
+.partner-name{font-family:var(--font-head);font-size:1.6rem;font-weight:600;color:var(--gold2);margin-bottom:8px}
+.partner-desc{font-size:.84rem;color:var(--text2);line-height:1.65;font-weight:300}
+
+/* ── DISCORD BANNER ── */
+.discord-section{background:var(--bg2);border-top:1px solid var(--border);border-bottom:1px solid var(--border);padding:100px 64px;text-align:center;position:relative;overflow:hidden}
+.discord-section::before{content:'';position:absolute;top:0;left:50%;transform:translateX(-50%);width:600px;height:1px;background:linear-gradient(90deg,transparent,var(--gold),transparent)}
+.discord-section::after{content:'';position:absolute;bottom:0;left:50%;transform:translateX(-50%);width:600px;height:1px;background:linear-gradient(90deg,transparent,rgba(201,168,76,.3),transparent)}
+.ds-title{font-family:var(--font-head);font-size:clamp(1.8rem,4vw,3rem);font-weight:300;color:var(--white);margin-bottom:12px}
+.ds-title em{font-style:italic;color:var(--gold2)}
+.ds-sub{font-size:.94rem;color:var(--text2);line-height:1.78;max-width:400px;margin:0 auto 32px;font-weight:300}
+
+/* ── UPDATE LOG ── */
+.updatelog{border:1px solid var(--border)}
+.ul-entry{display:grid;grid-template-columns:160px 1fr;border-bottom:1px solid var(--border);transition:background var(--transition)}
+.ul-entry:last-child{border-bottom:none}
+.ul-entry:hover{background:var(--surface)}
+.ul-left{padding:24px 20px;border-right:1px solid var(--border);background:var(--bg);display:flex;flex-direction:column;gap:6px}
+.ul-ver{font-family:var(--font-mono);font-size:.8rem;font-weight:700;color:var(--gold)}
+.ul-date{font-family:var(--font-mono);font-size:.56rem;color:var(--text3);letter-spacing:.1em}
+.ul-tag{font-family:var(--font-mono);font-size:.51rem;letter-spacing:.14em;text-transform:uppercase;padding:2px 6px;border:1px solid;width:fit-content;margin-top:2px}
+.utag-major{color:#4ae87a;border-color:#4ae87a}
+.utag-minor{color:#4ad4e8;border-color:#4ad4e8}
+.ul-right{padding:24px 28px}
+.ul-title{font-size:.95rem;font-weight:600;color:var(--white);margin-bottom:8px}
+.ul-changes{list-style:none;display:flex;flex-direction:column;gap:5px}
+.ul-changes li{font-size:.82rem;color:var(--text2);line-height:1.6;padding-left:14px;position:relative;font-weight:300}
+.ul-changes li::before{content:'';position:absolute;left:0;top:9px;width:5px;height:1px;background:var(--gold)}
+
+/* ── FOOTER ── */
+footer{padding:48px 64px;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px;background:var(--bg)}
+.footer-logo{font-family:var(--font-head);font-size:1.1rem;font-weight:600;color:var(--gold2);letter-spacing:.04em}
+.footer-links{display:flex;gap:24px;flex-wrap:wrap}
+.footer-links a{font-family:var(--font-mono);font-size:.58rem;letter-spacing:.12em;text-transform:uppercase;color:var(--text3);text-decoration:none;transition:color var(--transition)}
+.footer-links a:hover{color:var(--gold)}
+.footer-note{font-family:var(--font-mono);font-size:.56rem;color:var(--text3);letter-spacing:.1em}
+
+/* ── STATUS STRIP ── */
+.status-strip{background:var(--bg);border-bottom:1px solid var(--border);padding:10px 64px;display:flex;align-items:center;gap:24px;overflow-x:auto}
+.ss-label{font-family:var(--font-mono);font-size:.56rem;letter-spacing:.22em;text-transform:uppercase;color:var(--text3);flex-shrink:0}
+.ss-items{display:flex;gap:18px;flex-wrap:wrap}
+.ss-item{display:flex;align-items:center;gap:6px;font-family:var(--font-mono);font-size:.6rem;letter-spacing:.1em;color:var(--text2)}
+.ss-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0;animation:pulse-dot 2s ease-in-out infinite}
+.ss-dot.green{background:#4ae87a;box-shadow:0 0 5px #4ae87a}
+.ss-dot.gold{background:var(--gold);box-shadow:0 0 5px var(--gold-glow);animation-delay:.4s}
+.ss-dot.blue{background:#4ad4e8;box-shadow:0 0 5px #4ad4e8;animation-delay:.8s}
+
+/* ── TICKER ── */
+.ticker-wrap{overflow:hidden;background:var(--bg);border-bottom:1px solid var(--border);white-space:nowrap}
+.ticker-track{display:inline-flex;animation:ticker 36s linear infinite}
+.ticker-track:hover{animation-play-state:paused}
+.ticker-item{display:inline-flex;align-items:center;gap:8px;padding:10px 32px;font-family:var(--font-mono);font-size:.62rem;letter-spacing:.16em;text-transform:uppercase;color:var(--text3)}
+.ticker-item .tdot{width:4px;height:4px;border-radius:50%;background:var(--gold);flex-shrink:0}
+.ticker-item.t-gold{color:var(--gold)}
+.ticker-item.t-blue{color:#4ad4e8}
+@keyframes ticker{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
+
+@media(max-width:768px){
+  nav{padding:14px 20px}
+  nav.scrolled{padding:10px 20px}
+  .nav-links{display:none}
+  .section{padding:64px 20px}
+  .stats-grid{grid-template-columns:repeat(2,1fr)}
+  .tier-panel.active{grid-template-columns:1fr}
+  .timeline::before{left:20px}
+  .tl-item{grid-template-columns:0 36px 1fr}
+  .tl-left{display:none}
+  .tl-item.right .tl-right,.tl-item.left .tl-right{opacity:1;padding:0 0 44px 20px}
+  .tl-item.left .tl-left{display:none}
+  .partners-row{flex-direction:column}
+  .partner-card{border-right:none;border-bottom:1px solid var(--border)}
+  footer{padding:28px 20px;flex-direction:column;align-items:flex-start}
+  .discord-section{padding:60px 20px}
+  .trust-strip{padding:0 20px}
+  .modal-service-grid{grid-template-columns:1fr}
+  .booking-inner{grid-template-columns:1fr}
+  .apply-inner{grid-template-columns:1fr}
+  .cursor,.cursor-ring{display:none}
+  .ul-entry{grid-template-columns:1fr}
+  .ul-left{border-right:none;border-bottom:1px solid var(--border)}
+  .status-strip{padding:10px 20px}
+  .fab-dock{bottom:20px;right:20px}
+}
+</style>
+</head>
+<body>
+
+<!-- SCROLL PROGRESS BAR -->
+<div id="progressBar"></div>
+
+<!-- CURSOR -->
+<div class="cursor" id="cursor"></div>
+<div class="cursor-ring" id="cursorRing"></div>
+
+<!-- FEATURE 10: CONTACT MODAL -->
+<div class="modal-overlay" id="contactModal" onclick="modalBgClick(event)">
+  <div class="modal-box" id="modalBox">
+    <div class="modal-head">
+      <div>
+        <div class="modal-eyebrow">Get a Quote</div>
+        <div class="modal-title">Hire <em>Starfall</em></div>
+      </div>
+      <button class="modal-close" onclick="closeModal()">Close &#x2715;</button>
+    </div>
+    <div class="modal-body">
+      <div id="modalForm">
+        <p class="modal-lead">Tell us what you need and we'll follow up on Discord with a full quote and timeline.</p>
+        <div style="margin-bottom:18px">
+          <span class="modal-f-label">What do you need?</span>
+          <div class="modal-service-grid">
+            <button class="ms-btn" onclick="pickMs(this)">Moon Animator Pack</button>
+            <button class="ms-btn" onclick="pickMs(this)">Studio Map Build</button>
+            <button class="ms-btn" onclick="pickMs(this)">Lua Scripting</button>
+            <button class="ms-btn" onclick="pickMs(this)">Full Game Package</button>
+            <button class="ms-btn" onclick="pickMs(this)">Cutscene / Cinematic</button>
+            <button class="ms-btn" onclick="pickMs(this)">Other / Not Sure</button>
+          </div>
+        </div>
+        <label class="modal-f-label" for="mUser">Your Roblox / Discord Username</label>
+        <input class="modal-input" id="mUser" placeholder="e.g. DevUser_Kira" maxlength="40"/>
+        <label class="modal-f-label" for="mDetails">Project Details</label>
+        <textarea class="modal-textarea" id="mDetails" rows="4" placeholder="Describe your project, style, deadline, and references..."></textarea>
+        <div class="modal-discord-hint">
+          <p>Prefer to chat? Join our Discord and open a ticket for the fastest response.</p>
+          <a href="https://discord.gg/SPYcV66cp" target="_blank" class="btn btn-outline" style="font-size:.6rem;padding:8px 14px;flex-shrink:0">Discord</a>
+        </div>
+        <button class="modal-submit" onclick="submitModal()">Send Request &rarr;</button>
+      </div>
+      <div class="modal-success" id="modalSuccess">
+        <div class="modal-success-icon">&#10003;</div>
+        <div class="modal-success-title">Request Received</div>
+        <p class="modal-success-txt">Thank you for reaching out. We'll review your request and follow up on Discord shortly.</p>
+        <div style="margin-top:22px"><a href="https://discord.gg/SPYcV66cp" target="_blank" class="btn btn-gold" style="font-size:.68rem">Join Discord</a></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- CHAT -->
+<button class="chat-bubble-btn" onclick="toggleChat()">
+  &#128172;
+  <span class="chat-unread" id="chatUnread">1</span>
+</button>
+<div class="chat-win" id="chatWin">
+  <div class="chat-win-head">
+    <div>
+      <div class="chat-win-title">Starfall Dreams Chat</div>
+      <div class="chat-win-sub"><span class="chat-online-dot"></span>Live support</div>
+    </div>
+    <button class="chat-win-close" onclick="toggleChat()">CLOSE</button>
+  </div>
+  <div class="chat-msgs" id="chatMsgs">
+    <div class="chat-msg them">
+      <div class="chat-name-tag">StarfallDev</div>
+      <div class="chat-bubble-msg">Welcome to Starfall Dreams Development. Ask us about commissions or collabs.</div>
+      <div class="chat-msg-time">Today</div>
+    </div>
+  </div>
+  <div class="chat-input-row">
+    <input class="chat-name-in" id="chatName" placeholder="Name" maxlength="16"/>
+    <textarea class="chat-text-in" id="chatInput" placeholder="Message..." rows="1" onkeydown="chatKey(event)"></textarea>
+    <button class="chat-send-btn" onclick="sendMsg()">Send</button>
+  </div>
+</div>
+
+<!-- FEATURE 9: FAB DOCK -->
+<div class="fab-dock" id="fabDock">
+  <div class="fab-items">
+    <div class="fab-item"><span class="fab-label">Hire Us</span><button class="fab-icon-btn" onclick="openModal();toggleFab()">&#128188;</button></div>
+    <div class="fab-item"><span class="fab-label">Discord</span><a href="https://discord.gg/SPYcV66cp" target="_blank" class="fab-icon-btn">&#128172;</a></div>
+    <div class="fab-item"><span class="fab-label">Back to Top</span><button class="fab-icon-btn" onclick="window.scrollTo({top:0,behavior:'smooth'});toggleFab()">&#8593;</button></div>
+    <div class="fab-item"><span class="fab-label">Commissions</span><button class="fab-icon-btn" onclick="document.getElementById('commissions').scrollIntoView({behavior:'smooth'});toggleFab()">&#128196;</button></div>
+  </div>
+  <button class="fab-main" id="fabMain" onclick="toggleFab()">&#43;</button>
+</div>
+
+<!-- NAV -->
+<nav id="navbar">
+  <a href="#" class="nav-logo"><span class="nav-logo-star">&#10022;</span> Starfall Dreams</a>
+  <ul class="nav-links">
+    <li><a href="#services">Services</a></li>
+    <li><a href="#commissions">Commissions</a></li>
+    <li><a href="#collabs">Collabs</a></li>
+    <li><a href="#team">Team</a></li>
+    <li><a href="#story">Our Story</a></li>
+    <li><a href="#community">Community</a></li>
+  </ul>
+  <button class="nav-cta btn-gold" onclick="openModal()">Hire Us</button>
+</nav>
+
+<!-- HERO (Feature 1: Star Field) -->
+<div class="hero">
+  <canvas id="stars"></canvas>
+  <div class="hero-orb"></div>
+  <div class="hero-content">
+    <p class="hero-eyebrow">&#10022; Roblox Development Studio</p>
+    <h1 class="hero-title">Starfall<br/><em>Dreams</em><strong>Development</strong></h1>
+    <p class="hero-sub">Crafting polished Roblox experiences. Moon Animator specialists, Studio builders, and Lua engineers — all under one roof.</p>
+    <div class="hero-actions">
+      <button class="btn btn-gold" onclick="openModal()">Hire Us</button>
+      <a href="https://discord.gg/SPYcV66cp" target="_blank" class="btn btn-outline">Discord Server</a>
+    </div>
+  </div>
+  <div class="hero-scroll">Scroll</div>
+</div>
+
+<!-- TICKER -->
+<div class="ticker-wrap">
+  <div class="ticker-track">
+    <span class="ticker-item t-gold"><span class="tdot"></span>Starfall Dreams Development</span>
+    <span class="ticker-item"><span class="tdot"></span>Moon Animator Specialists</span>
+    <span class="ticker-item t-blue"><span class="tdot"></span>Commissions Open</span>
+    <span class="ticker-item"><span class="tdot"></span>Studio Builds &amp; Scripting</span>
+    <span class="ticker-item t-gold"><span class="tdot"></span>Collabs Welcome</span>
+    <span class="ticker-item"><span class="tdot"></span>Discord Active</span>
+    <span class="ticker-item t-blue"><span class="tdot"></span>Partners: RBLX Hub &bull; Berry Bunnies &bull; 2LazyDevs</span>
+    <span class="ticker-item"><span class="tdot"></span>Roblox Studio Experts</span>
+    <span class="ticker-item t-gold"><span class="tdot"></span>Starfall Dreams Development</span>
+    <span class="ticker-item"><span class="tdot"></span>Moon Animator Specialists</span>
+    <span class="ticker-item t-blue"><span class="tdot"></span>Commissions Open</span>
+    <span class="ticker-item"><span class="tdot"></span>Studio Builds &amp; Scripting</span>
+    <span class="ticker-item t-gold"><span class="tdot"></span>Collabs Welcome</span>
+    <span class="ticker-item"><span class="tdot"></span>Discord Active</span>
+    <span class="ticker-item t-blue"><span class="tdot"></span>Partners: RBLX Hub &bull; Berry Bunnies &bull; 2LazyDevs</span>
+    <span class="ticker-item"><span class="tdot"></span>Roblox Studio Experts</span>
+  </div>
+</div>
+
+<!-- STATUS -->
+<div class="status-strip">
+  <span class="ss-label">Status</span>
+  <div class="ss-items">
+    <span class="ss-item"><span class="ss-dot green"></span>Website Online</span>
+    <span class="ss-item"><span class="ss-dot green"></span>Commissions Open</span>
+    <span class="ss-item"><span class="ss-dot green"></span>Collabs Open</span>
+    <span class="ss-item"><span class="ss-dot gold"></span>Staff Apps Open</span>
+    <span class="ss-item"><span class="ss-dot blue"></span>Discord Active</span>
+  </div>
+</div>
+
+<!-- FEATURE 3: TRUST / BADGE STRIP -->
+<div class="trust-strip">
+  <div class="trust-inner">
+    <div class="trust-item"><span class="trust-icon">&#10022;</span><div class="trust-text"><strong>40+</strong>Commissions Delivered</div></div>
+    <div class="trust-item"><span class="trust-icon">&#127775;</span><div class="trust-text"><strong>100%</strong>Satisfaction Rate</div></div>
+    <div class="trust-item"><span class="trust-icon">&#127381;</span><div class="trust-text"><strong>12</strong>Games Built</div></div>
+    <div class="trust-item"><span class="trust-icon">&#128101;</span><div class="trust-text"><strong>6</strong>Team Members</div></div>
+    <div class="trust-item"><span class="trust-icon">&#129309;</span><div class="trust-text"><strong>3</strong>Official Partners</div></div>
+    <div class="trust-item"><span class="trust-icon">&#128172;</span><div class="trust-text"><strong>Active</strong>Discord Community</div></div>
+  </div>
+</div>
+
+<!-- FEATURE 5: ANIMATED STATS -->
+<div class="stats-grid">
+  <div class="stat-cell"><div class="stat-num" data-target="40">0</div><div class="stat-label">Commissions Done</div></div>
+  <div class="stat-cell"><div class="stat-num" data-target="12">0</div><div class="stat-label">Games Built</div></div>
+  <div class="stat-cell"><div class="stat-num" data-target="6">0</div><div class="stat-label">Team Members</div></div>
+  <div class="stat-cell"><div class="stat-num" data-target="100">0</div><div class="stat-label">Satisfaction %</div></div>
+</div>
+
+<hr class="divider-line"/>
+
+<!-- FEATURE 4: FLIP CARD SERVICES -->
+<section class="section" id="services">
+  <span class="section-tag reveal">What We Do</span>
+  <h2 class="section-title reveal">Built for <em>Roblox</em><br/>from the ground up.</h2>
+  <p class="section-lead reveal">Hover any service card to see what we deliver and how we work.</p>
+  <div class="services-grid">
+    <div class="flip-card">
+      <div class="flip-inner">
+        <div class="flip-front">
+          <span class="flip-icon">&#9876;</span>
+          <div class="flip-num">01</div>
+          <div class="flip-title">Moon Animator<br/>Rigs</div>
+          <span class="flip-tag">Animation</span>
+        </div>
+        <div class="flip-back">
+          <div class="flip-back-title">Moon Animator Rigs</div>
+          <div class="flip-back-desc">Custom character rigs and full animation sequences. Combat, walk cycles, idles, cutscenes, and cinematic movement.</div>
+          <div class="flip-back-detail">Hover or tap to flip back</div>
+        </div>
+      </div>
+    </div>
+    <div class="flip-card">
+      <div class="flip-inner">
+        <div class="flip-front">
+          <span class="flip-icon">&#127963;</span>
+          <div class="flip-num">02</div>
+          <div class="flip-title">Studio Map<br/>Builds</div>
+          <span class="flip-tag">Building</span>
+        </div>
+        <div class="flip-back">
+          <div class="flip-back-title">Studio Map Builds</div>
+          <div class="flip-back-desc">Full environment builds inside Roblox Studio. Optimised terrain, modular assets, and matched to your game aesthetic.</div>
+          <div class="flip-back-detail">Hover or tap to flip back</div>
+        </div>
+      </div>
+    </div>
+    <div class="flip-card">
+      <div class="flip-inner">
+        <div class="flip-front">
+          <span class="flip-icon">&#128190;</span>
+          <div class="flip-num">03</div>
+          <div class="flip-title">Scripting &amp;<br/>Systems</div>
+          <span class="flip-tag">Scripting</span>
+        </div>
+        <div class="flip-back">
+          <div class="flip-back-title">Scripting &amp; Systems</div>
+          <div class="flip-back-desc">Lua scripting for game systems, UI, combat frameworks, datastores, and custom mechanics. Clean, commented code.</div>
+          <div class="flip-back-detail">Hover or tap to flip back</div>
+        </div>
+      </div>
+    </div>
+    <div class="flip-card">
+      <div class="flip-inner">
+        <div class="flip-front">
+          <span class="flip-icon">&#127916;</span>
+          <div class="flip-num">04</div>
+          <div class="flip-title">Cutscene<br/>Production</div>
+          <span class="flip-tag">Cinematic</span>
+        </div>
+        <div class="flip-back">
+          <div class="flip-back-title">Cutscene Production</div>
+          <div class="flip-back-desc">Full cinematic cutscenes using Moon Animator, CineCam pipelines, tween sequencing, and scripted triggers.</div>
+          <div class="flip-back-detail">Hover or tap to flip back</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<hr class="divider-line"/>
+
+<!-- FEATURE 6: TABBED COMMISSION TIERS -->
+<section class="section" id="commissions">
+  <span class="section-tag reveal">Commissions</span>
+  <h2 class="section-title reveal">Choose your <em>tier.</em></h2>
+  <p class="section-lead reveal">All commissions are currently open. Select a tier to see what is included.</p>
+  <div class="tier-tabs">
+    <button class="tier-tab active" onclick="switchTier('bronze',this)">&#129353; Bronze</button>
+    <button class="tier-tab" onclick="switchTier('silver',this)">&#129352; Silver</button>
+    <button class="tier-tab" onclick="switchTier('gold',this)">&#127881; Gold</button>
+  </div>
+  <div id="tier-bronze" class="tier-panel tier-bronze active">
+    <div class="tier-panel-left">
+      <span class="tier-badge">Bronze Tier</span>
+      <div class="tier-name">Starter Package</div>
+      <div class="tier-price">From 300 R$</div>
+      <p class="tier-desc">Perfect for smaller scoped requests. A single focused deliverable — one animation pack, one script, or one environment section.</p>
+      <ul class="tier-features">
+        <li>One focused deliverable</li>
+        <li>Up to 1 revision round</li>
+        <li>3–5 day turnaround</li>
+        <li>Discord communication</li>
+        <li>Delivered as Roblox file</li>
+      </ul>
+      <div style="margin-top:24px"><button class="btn btn-gold" onclick="openModal()">Request Bronze &rarr;</button></div>
+    </div>
+    <div class="tier-panel-right">
+      <div class="tier-detail-box"><div class="tier-detail-label">Best For</div><div class="tier-detail-val">Single animations, small scripts, quick builds</div></div>
+      <div class="tier-detail-box"><div class="tier-detail-label">Turnaround</div><div class="tier-detail-val">3 – 5 business days</div></div>
+      <div class="tier-detail-box"><div class="tier-detail-label">Revisions</div><div class="tier-detail-val">1 round included</div></div>
+      <div class="tier-detail-box"><div class="tier-detail-label">Communication</div><div class="tier-detail-val">Discord ticket</div></div>
+    </div>
+  </div>
+  <div id="tier-silver" class="tier-panel tier-silver">
+    <div class="tier-panel-left">
+      <span class="tier-badge">Silver Tier</span>
+      <div class="tier-name">Standard Package</div>
+      <div class="tier-price">From 800 R$</div>
+      <p class="tier-desc">The most popular choice. Multi-part deliverables — full animation sets, complete map environments, or a scripted game system.</p>
+      <ul class="tier-features">
+        <li>Multi-part deliverable</li>
+        <li>Up to 2 revision rounds</li>
+        <li>5–10 day turnaround</li>
+        <li>Priority Discord support</li>
+        <li>Progress updates included</li>
+        <li>Documented delivery</li>
+      </ul>
+      <div style="margin-top:24px"><button class="btn btn-gold" onclick="openModal()">Request Silver &rarr;</button></div>
+    </div>
+    <div class="tier-panel-right">
+      <div class="tier-detail-box"><div class="tier-detail-label">Best For</div><div class="tier-detail-val">Full animation packs, complete maps, game systems</div></div>
+      <div class="tier-detail-box"><div class="tier-detail-label">Turnaround</div><div class="tier-detail-val">5 – 10 business days</div></div>
+      <div class="tier-detail-box"><div class="tier-detail-label">Revisions</div><div class="tier-detail-val">2 rounds included</div></div>
+      <div class="tier-detail-box"><div class="tier-detail-label">Communication</div><div class="tier-detail-val">Priority Discord + updates</div></div>
+    </div>
+  </div>
+  <div id="tier-gold" class="tier-panel tier-gold">
+    <div class="tier-panel-left">
+      <span class="tier-badge">Gold Tier</span>
+      <div class="tier-name">Full Game Package</div>
+      <div class="tier-price">From 2500 R$</div>
+      <p class="tier-desc">End-to-end game development. Building, scripting, animation, and cinematic cutscenes all handled by the full Starfall team.</p>
+      <ul class="tier-features">
+        <li>Full game development</li>
+        <li>Unlimited revisions</li>
+        <li>2+ week dedicated timeline</li>
+        <li>Direct lead developer contact</li>
+        <li>Full documentation included</li>
+        <li>Post-delivery support</li>
+        <li>Exclusive priority queue</li>
+      </ul>
+      <div style="margin-top:24px"><button class="btn btn-gold" onclick="openModal()">Request Gold &rarr;</button></div>
+    </div>
+    <div class="tier-panel-right">
+      <div class="tier-detail-box"><div class="tier-detail-label">Best For</div><div class="tier-detail-val">Complete games, large studios, serious projects</div></div>
+      <div class="tier-detail-box"><div class="tier-detail-label">Turnaround</div><div class="tier-detail-val">2+ weeks (scope dependent)</div></div>
+      <div class="tier-detail-box"><div class="tier-detail-label">Revisions</div><div class="tier-detail-val">Unlimited</div></div>
+      <div class="tier-detail-box"><div class="tier-detail-label">Communication</div><div class="tier-detail-val">Direct lead contact + full updates</div></div>
+    </div>
+  </div>
+</section>
+
+<hr class="divider-line"/>
+
+<!-- COLLABS -->
+<section class="section" id="collabs">
+  <span class="section-tag reveal">Collaborations</span>
+  <h2 class="section-title reveal">Let's build <em>together.</em></h2>
+  <p class="section-lead reveal">We are open to collaborating with developers, groups, and studios across the Roblox community.</p>
+  <div class="collabs-grid">
+    <div class="collab-card reveal"><span class="collab-status cs-open">Open</span><div class="collab-title">Developer Collab</div><p class="collab-desc">Scripters, builders, or animators looking to work on something together. We are open to teaming up on shared projects.</p></div>
+    <div class="collab-card reveal"><span class="collab-status cs-open">Open</span><div class="collab-title">Group Collab</div><p class="collab-desc">Have a Roblox dev group and want to partner on a game or community event? Get in touch on Discord.</p></div>
+    <div class="collab-card reveal"><span class="collab-status cs-interest">Interest Only</span><div class="collab-title">Sponsor Collab</div><p class="collab-desc">Interested in sponsoring Starfall Dreams content or games? Reach out to discuss opportunities.</p></div>
+    <div class="collab-card reveal"><span class="collab-status cs-open">Open</span><div class="collab-title">How to Apply</div><p class="collab-desc">Join our Discord and message in the collabs channel. Describe your project, team size, and what you are looking for.</p></div>
+  </div>
+  <div style="margin-top:32px" class="reveal"><a href="https://discord.gg/SPYcV66cp" target="_blank" class="btn btn-outline">Reach Out on Discord</a></div>
+</section>
+
+<hr class="divider-line"/>
+
+<!-- FEATURE 7: TEAM HOVER CARDS -->
+<section class="section" id="team">
+  <span class="section-tag reveal">The Team</span>
+  <h2 class="section-title reveal">The people behind <em>Starfall.</em></h2>
+  <p class="section-lead reveal">Hover each card to learn more about the team.</p>
+  <div class="team-grid">
+    <div class="team-card reveal"><div class="team-av">SD</div><div class="team-name">StarfallDev</div><div class="team-role">Founder / Lead</div><div class="team-bio">Oversees all projects, handles commissions, and steers the direction of Starfall Dreams Development.</div><div class="team-tags"><span class="team-tag">Leadership</span><span class="team-tag">Commissions</span></div></div>
+    <div class="team-card reveal"><div class="team-av">AN</div><div class="team-name">AnimX</div><div class="team-role">Lead Animator</div><div class="team-bio">Moon Animator expert specialising in combat rigs, character animation, and cinematic sequences.</div><div class="team-tags"><span class="team-tag">Moon Animator</span><span class="team-tag">Combat</span></div></div>
+    <div class="team-card reveal"><div class="team-av">BL</div><div class="team-name">BuildLox</div><div class="team-role">Senior Builder</div><div class="team-bio">Creates detailed maps and environments inside Roblox Studio with a focus on performance and visual quality.</div><div class="team-tags"><span class="team-tag">Studio</span><span class="team-tag">Terrain</span></div></div>
+    <div class="team-card reveal"><div class="team-av">SC</div><div class="team-name">ScriptCo</div><div class="team-role">Lua Developer</div><div class="team-bio">Writes clean game systems, UI scripts, combat frameworks, and datastores for Roblox projects.</div><div class="team-tags"><span class="team-tag">Lua</span><span class="team-tag">Systems</span></div></div>
+  </div>
+</section>
+
+<hr class="divider-line"/>
+
+<!-- FEATURE 8: TIMELINE -->
+<section class="section" id="story">
+  <span class="section-tag reveal">Our Story</span>
+  <h2 class="section-title reveal">How we got <em>here.</em></h2>
+  <p class="section-lead reveal">From a small group of developers to a full studio — the Starfall story.</p>
+  <div class="timeline">
+    <div class="tl-item left reveal">
+      <div class="tl-left">
+        <div class="tl-date">March 2026</div>
+        <div class="tl-title">Fennecs Dev Group Founded</div>
+        <p class="tl-desc">The original group came together with a shared vision for quality Roblox development. First commissions taken on.</p>
+      </div>
+      <div class="tl-center"><div class="tl-dot"></div></div>
+      <div class="tl-right"></div>
+    </div>
+    <div class="tl-item right reveal">
+      <div class="tl-left"></div>
+      <div class="tl-center"><div class="tl-dot"></div></div>
+      <div class="tl-right">
+        <div class="tl-date">April 2026</div>
+        <div class="tl-title">Website Launch</div>
+        <p class="tl-desc">Official developer website went live with services, commissions, and Discord integration.</p>
+      </div>
+    </div>
+    <div class="tl-item left reveal">
+      <div class="tl-left">
+        <div class="tl-date">May 2026</div>
+        <div class="tl-title">Partnerships Formed</div>
+        <p class="tl-desc">RBLX Hub, Berry Bunnies, and 2LazyDevs joined as official partners, expanding our reach in the community.</p>
+      </div>
+      <div class="tl-center"><div class="tl-dot"></div></div>
+      <div class="tl-right"></div>
+    </div>
+    <div class="tl-item right reveal">
+      <div class="tl-left"></div>
+      <div class="tl-center"><div class="tl-dot"></div></div>
+      <div class="tl-right">
+        <div class="tl-date">May 2026</div>
+        <div class="tl-title">Rebranded to Starfall Dreams</div>
+        <p class="tl-desc">A fresh identity. Starfall Dreams Development launches with a completely redesigned studio site and expanded services.</p>
+      </div>
+    </div>
+    <div class="tl-item left reveal">
+      <div class="tl-left">
+        <div class="tl-date">Coming Soon</div>
+        <div class="tl-title">Original Game Announcement</div>
+        <p class="tl-desc">An original Roblox game built fully in-house by the Starfall team. Announcement dropping on Discord first.</p>
+      </div>
+      <div class="tl-center"><div class="tl-dot"></div></div>
+      <div class="tl-right"></div>
+    </div>
+  </div>
+</section>
+
+<hr class="divider-line"/>
+
+<!-- PARTNERS -->
+<section class="section" id="partners">
+  <span class="section-tag reveal">Partners</span>
+  <h2 class="section-title reveal">Who we work <em>with.</em></h2>
+  <p class="section-lead reveal">Trusted partnerships within the Roblox developer community.</p>
+  <div class="partners-row reveal">
+    <div class="partner-card"><div class="partner-badge">Official Partner</div><div class="partner-name">RBLX Hub</div><p class="partner-desc">A trusted Roblox community hub. We collaborate on developer resources, group projects, and community outreach.</p></div>
+    <div class="partner-card"><div class="partner-badge">Community Partner</div><div class="partner-name">Berry Bunnies</div><p class="partner-desc">A creative Roblox community group. We work alongside Berry Bunnies on community events and cross-group projects.</p></div>
+    <div class="partner-card"><div class="partner-badge">Dev Partner</div><div class="partner-name">2LazyDevs</div><p class="partner-desc">A fellow Roblox development group. We partner on joint builds, collabs, and development projects.</p></div>
+  </div>
+</section>
+
+<hr class="divider-line"/>
+
+<!-- REVIEWS -->
+<section class="section" id="reviews">
+  <span class="section-tag reveal">Reviews</span>
+  <h2 class="section-title reveal">What developers <em>say.</em></h2>
+  <p class="section-lead reveal">Feedback from clients and collaborators in the Roblox community.</p>
+  <div class="reviews-grid">
+    <div class="review-card reveal"><div class="rv-stars">&#9733;&#9733;&#9733;&#9733;&#9733;</div><p class="rv-text">"The Moon Animator work was clean and the rigs were exactly what we needed. Fast turnaround too."</p><div class="rv-author">DevUser_Kira <span>/ Roblox Developer</span></div></div>
+    <div class="review-card reveal"><div class="rv-stars">&#9733;&#9733;&#9733;&#9733;&#9733;</div><p class="rv-text">"The map build came out better than expected. Runs smoothly with zero lag issues."</p><div class="rv-author">StudioBuilder_Zak <span>/ Game Dev</span></div></div>
+    <div class="review-card reveal"><div class="rv-stars">&#9733;&#9733;&#9733;&#9733;&#9733;</div><p class="rv-text">"Fennecs handled the entire cutscene pipeline — camera work, animation, scripted triggers. Incredible."</p><div class="rv-author">MapleGames_Rex <span>/ Studio Owner</span></div></div>
+    <div class="review-card reveal"><div class="rv-stars">&#9733;&#9733;&#9733;&#9733;&#9733;</div><p class="rv-text">"Scripts came back well commented and easy to extend. Will commission again."</p><div class="rv-author">CodeDev_Aly <span>/ Lead Scripter</span></div></div>
+  </div>
+</section>
+
+<hr class="divider-line"/>
+
+<!-- FAQ -->
+<section class="section" id="faq">
+  <span class="section-tag reveal">FAQ</span>
+  <h2 class="section-title reveal">Common <em>questions.</em></h2>
+  <p class="section-lead reveal">Everything you need before commissioning or collaborating with Starfall Dreams.</p>
+  <div class="faq-list reveal">
+    <div class="faq-item"><button class="faq-q" onclick="toggleFaq(this)"><span>How do I commission Starfall Dreams Development?</span><span class="faq-arrow">&#9658;</span></button><div class="faq-a"><p>Click the Hire Us button or join our Discord and open a commission ticket. We will discuss your project, timeline, and pricing there.</p></div></div>
+    <div class="faq-item"><button class="faq-q" onclick="toggleFaq(this)"><span>Do you do animation only or full development?</span><span class="faq-arrow">&#9658;</span></button><div class="faq-a"><p>Both. We handle animation-only commissions through Moon Animator and full development including Studio builds, scripting, and cinematics.</p></div></div>
+    <div class="faq-item"><button class="faq-q" onclick="toggleFaq(this)"><span>How long does a commission take?</span><span class="faq-arrow">&#9658;</span></button><div class="faq-a"><p>Timelines depend on scope. Simple animation packs can be a few days. Full builds or game systems take one to two weeks. We keep you updated throughout.</p></div></div>
+    <div class="faq-item"><button class="faq-q" onclick="toggleFaq(this)"><span>Which tier should I choose?</span><span class="faq-arrow">&#9658;</span></button><div class="faq-a"><p>Bronze for single focused deliverables, Silver for multi-part projects, Gold for full game development. If unsure, open a Discord ticket and we will recommend the right fit.</p></div></div>
+    <div class="faq-item"><button class="faq-q" onclick="toggleFaq(this)"><span>What are your commission rules?</span><span class="faq-arrow">&#9658;</span></button><div class="faq-a"><p>We expect clear communication, respect for agreed timelines, and adherence to standard commission TOS. We do not continue work with clients who violate our terms.</p></div></div>
+  </div>
+</section>
+
+<hr class="divider-line"/>
+
+<!-- ANNOUNCEMENTS -->
+<section class="section" id="announcements">
+  <span class="section-tag reveal">Announcements</span>
+  <h2 class="section-title reveal">Latest from <em>Starfall.</em></h2>
+  <p class="section-lead reveal">Official updates posted directly by the Starfall Dreams Development team.</p>
+  <div class="ann-list" id="annList"><div class="ann-empty" id="annEmpty">No announcements yet. Check back soon.</div></div>
+  <div style="margin-top:40px">
+    <div class="ann-gate" id="annGate">
+      <h3>Admin Access</h3>
+      <p>Enter the admin password to post announcements.</p>
+      <input type="password" class="ann-input" id="annPassInput" placeholder="Password"/>
+      <p class="ann-err-msg" id="annErr">Incorrect password.</p>
+      <button class="btn btn-gold" style="width:100%;font-size:.68rem" onclick="tryLogin()">Unlock</button>
+    </div>
+    <div class="ann-panel" id="annPanel">
+      <div class="ann-form">
+        <div class="ann-form-title">Post Announcement</div>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+          <span style="font-family:var(--font-mono);font-size:.6rem;color:#4ae87a;letter-spacing:.14em">ADMIN LOGGED IN</span>
+          <button class="btn-logout-ann" onclick="logout()">Log Out</button>
+        </div>
+        <div class="form-row"><label>Type</label><select id="annType"><option value="update">Update</option><option value="release">Release</option><option value="maintenance">Maintenance</option><option value="general">General</option></select></div>
+        <div class="form-row"><label>Title</label><input type="text" id="annTitle" placeholder="Announcement title..."/></div>
+        <div class="form-row"><label>Message</label><textarea id="annBody" rows="5" placeholder="Write your announcement..."></textarea></div>
+        <div class="form-actions">
+          <button class="btn-post-ann" onclick="postAnn()">Post</button>
+          <button class="btn-clear-ann" onclick="clearAnns()">Clear All</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<hr class="divider-line"/>
+
+<!-- UPDATE LOG -->
+<section class="section" id="updatelog">
+  <span class="section-tag reveal">Update Log</span>
+  <h2 class="section-title reveal">A record of <em>everything.</em></h2>
+  <p class="section-lead reveal">Full changelog for Starfall Dreams Development and its website.</p>
+  <div class="updatelog reveal">
+    <div class="ul-entry"><div class="ul-left"><span class="ul-ver">v1.0.0</span><span class="ul-date">May 2026</span><span class="ul-tag utag-major">Major</span></div><div class="ul-right"><div class="ul-title">Starfall Dreams — Site Launch</div><ul class="ul-changes"><li>Full rebrand from Fennecs Dev Group to Starfall Dreams Development</li><li>Complete site redesign — midnight blue + gold, minimal and clean layout</li><li>Parallax star field hero with animated constellation background</li><li>Flip card services with hover-reveal detail panels</li><li>Animated stats counters on scroll</li><li>Scroll progress bar across top of page</li><li>Tabbed Bronze / Silver / Gold commission tiers</li><li>Team hover cards with reveal bio and skill tags</li><li>Studio history timeline section</li><li>Trust badge strip with key stats</li><li>Floating action button dock (FAB)</li><li>Hire Us contact modal with service picker</li><li>All three partners carried over: RBLX Hub, Berry Bunnies, 2LazyDevs</li></ul></div></div>
+  </div>
+</section>
+
+<hr class="divider-line"/>
+
+<!-- DISCORD BANNER -->
+<div class="discord-section" id="community">
+  <h2 class="ds-title">Join the <em>Community</em></h2>
+  <p class="ds-sub">Connect with Starfall Dreams on Discord. Ask about commissions, collabs, or just hang out.</p>
+  <a href="https://discord.gg/SPYcV66cp" target="_blank" class="btn btn-gold">Join the Server</a>
+</div>
+
+<!-- FOOTER -->
+<footer>
+  <span class="footer-logo">&#10022; Starfall Dreams</span>
+  <div class="footer-links">
+    <a href="#services">Services</a>
+    <a href="#commissions">Commissions</a>
+    <a href="#collabs">Collabs</a>
+    <a href="#team">Team</a>
+    <a href="#story">Our Story</a>
+    <a href="#partners">Partners</a>
+    <a href="#reviews">Reviews</a>
+    <a href="https://discord.gg/SPYcV66cp" target="_blank">Discord</a>
+  </div>
+  <span class="footer-note">v1.0.0 &mdash; Starfall Dreams Development &mdash; Roblox Studio / Moon Animator</span>
+</footer>
+
+<script>
+/* ── CURSOR ── */
+const cur=document.getElementById('cursor'),curR=document.getElementById('cursorRing');
+document.addEventListener('mousemove',e=>{cur.style.left=e.clientX+'px';cur.style.top=e.clientY+'px';curR.style.left=e.clientX+'px';curR.style.top=e.clientY+'px'});
+document.querySelectorAll('a,button,.flip-card,.team-card,.review-card,.collab-card,.partner-card').forEach(el=>{
+  el.addEventListener('mouseenter',()=>{cur.style.width='16px';cur.style.height='16px';curR.style.width='46px';curR.style.height='46px'});
+  el.addEventListener('mouseleave',()=>{cur.style.width='8px';cur.style.height='8px';curR.style.width='32px';curR.style.height='32px'});
+});
+
+/* ── FEATURE 1: STAR FIELD ── */
+(function(){
+  const canvas=document.getElementById('stars');
+  if(!canvas)return;
+  const ctx=canvas.getContext('2d');
+  let W,H,stars=[];
+  function resize(){W=canvas.width=window.innerWidth;H=canvas.height=window.innerHeight}
+  resize();window.addEventListener('resize',resize);
+  function mkStars(){stars=Array.from({length:180},()=>({x:Math.random()*W,y:Math.random()*H,r:Math.random()*1.2+.2,a:Math.random()*.7+.1,speed:Math.random()*.3+.05,twinkle:Math.random()*Math.PI*2}))}
+  mkStars();
+  let t=0;
+  function drawStars(){
+    ctx.clearRect(0,0,W,H);
+    t+=.008;
+    stars.forEach(s=>{
+      s.twinkle+=s.speed*.04;
+      const opacity=s.a*(0.5+0.5*Math.sin(s.twinkle));
+      ctx.beginPath();ctx.arc(s.x,s.y,s.r,0,Math.PI*2);
+      ctx.fillStyle=`rgba(201,168,76,${opacity})`;ctx.fill();
+    });
+    // draw constellation lines between nearby stars
+    stars.forEach((a,i)=>stars.slice(i+1,i+4).forEach(b=>{
+      const dx=a.x-b.x,dy=a.y-b.y,d=Math.sqrt(dx*dx+dy*dy);
+      if(d<120){ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.strokeStyle=`rgba(201,168,76,${(1-d/120)*.04})`;ctx.lineWidth=.5;ctx.stroke()}
+    }));
+    requestAnimationFrame(drawStars);
+  }
+  drawStars();
+})();
+
+/* ── FEATURE 2: SCROLL PROGRESS ── */
+window.addEventListener('scroll',()=>{
+  const el=document.documentElement;
+  const pct=(el.scrollTop||document.body.scrollTop)/(el.scrollHeight-el.clientHeight)*100;
+  document.getElementById('progressBar').style.width=pct+'%';
+  document.getElementById('navbar').classList.toggle('scrolled',window.scrollY>60);
+});
+
+/* ── SCROLL REVEAL ── */
+const obs=new IntersectionObserver(entries=>{entries.forEach(e=>{if(e.isIntersecting){e.target.classList.add('visible');obs.unobserve(e.target)}})},{threshold:.1});
+document.querySelectorAll('.reveal').forEach(el=>obs.observe(el));
+
+/* ── FEATURE 5: ANIMATED COUNTERS ── */
+const cObs=new IntersectionObserver(entries=>{entries.forEach(e=>{if(e.isIntersecting){const el=e.target,target=+el.dataset.target;let n=0;const step=Math.max(1,Math.ceil(target/50));const t=setInterval(()=>{n+=step;if(n>=target){el.textContent=target+'+';clearInterval(t)}else el.textContent=n},26);cObs.unobserve(el)}})},{threshold:.5});
+document.querySelectorAll('.stat-num').forEach(el=>cObs.observe(el));
+
+/* ── FEATURE 4: FLIP CARDS (tap on mobile) ── */
+document.querySelectorAll('.flip-card').forEach(c=>{c.addEventListener('click',()=>c.classList.toggle('flipped'))});
+
+/* ── FEATURE 6: TIER TABS ── */
+function switchTier(name,btn){
+  document.querySelectorAll('.tier-tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.tier-panel').forEach(p=>p.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('tier-'+name).classList.add('active');
+}
+
+/* ── FEATURE 7: TEAM CARDS (CSS handles hover, nothing extra needed) ── */
+
+/* ── FAQ ── */
+function toggleFaq(btn){const item=btn.closest('.faq-item'),open=item.classList.contains('open');document.querySelectorAll('.faq-item.open').forEach(i=>i.classList.remove('open'));if(!open)item.classList.add('open')}
+
+/* ── CHAT ── */
+let chatOpen=false;
+setTimeout(()=>document.getElementById('chatUnread').classList.add('show'),3500);
+function toggleChat(){chatOpen=!chatOpen;document.getElementById('chatWin').classList.toggle('open',chatOpen);document.getElementById('chatUnread').classList.remove('show')}
+function chatKey(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMsg()}}
+function sendMsg(){
+  const n=document.getElementById('chatName'),m=document.getElementById('chatInput');
+  const name=n.value.trim()||'Visitor',text=m.value.trim();
+  if(!text)return;
+  addMsg({name,text,time:new Date().toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'}),them:false});
+  m.value='';
+  setTimeout(()=>{const replies=['Thanks for reaching out. Join our Discord for faster responses.','Feel free to ask about commissions or collabs on Discord.','Check the commission tiers section for our current packages.','We appreciate the message. For project discussions Discord is best.'];addMsg({name:'StarfallDev',text:replies[Math.floor(Math.random()*replies.length)],time:new Date().toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'}),them:true});if(!chatOpen)document.getElementById('chatUnread').classList.add('show')},1200);
+}
+function addMsg(msg){const msgs=document.getElementById('chatMsgs');const d=document.createElement('div');d.className='chat-msg '+(msg.them?'them':'me');d.innerHTML=`<div class="chat-name-tag">${msg.name}</div><div class="chat-bubble-msg">${msg.text}</div><div class="chat-msg-time">${msg.time}</div>`;msgs.appendChild(d);msgs.scrollTop=msgs.scrollHeight}
+
+/* ── FEATURE 10: CONTACT MODAL ── */
+let pickedService='';
+function openModal(){document.getElementById('contactModal').classList.add('open');document.body.style.overflow='hidden'}
+function closeModal(){document.getElementById('contactModal').classList.remove('open');document.body.style.overflow=''}
+function modalBgClick(e){if(e.target===document.getElementById('contactModal'))closeModal()}
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal()});
+function pickMs(btn){document.querySelectorAll('.ms-btn').forEach(b=>b.classList.remove('sel'));btn.classList.add('sel');pickedService=btn.textContent}
+function submitModal(){
+  const user=document.getElementById('mUser').value.trim(),det=document.getElementById('mDetails').value.trim();
+  if(!user||!det){alert('Please fill in your username and project details.');return}
+  const reqs=[];try{const s=localStorage.getItem('sfd_hire');if(s)reqs.push(...JSON.parse(s))}catch(e){}
+  reqs.push({user,service:pickedService||'Not specified',details:det,time:new Date().toLocaleString()});
+  try{localStorage.setItem('sfd_hire',JSON.stringify(reqs.slice(-30)))}catch(e){}
+  document.getElementById('modalForm').style.display='none';
+  document.getElementById('modalSuccess').classList.add('show');
+}
+
+/* ── FEATURE 9: FAB DOCK ── */
+function toggleFab(){const d=document.getElementById('fabDock'),m=document.getElementById('fabMain');d.classList.toggle('open');m.classList.toggle('open')}
+document.addEventListener('click',e=>{if(!e.target.closest('#fabDock')){document.getElementById('fabDock').classList.remove('open');document.getElementById('fabMain').classList.remove('open')}});
+
+/* ── ADMIN ANNOUNCEMENTS ── */
+const PASS='starfall2026';let anns=[];
+try{anns=JSON.parse(localStorage.getItem('sfd_anns')||'[]')}catch(e){}
+function saveAnns(){try{localStorage.setItem('sfd_anns',JSON.stringify(anns))}catch(e){}}
+function tryLogin(){const v=document.getElementById('annPassInput').value,err=document.getElementById('annErr'),inp=document.getElementById('annPassInput');if(v===PASS){document.getElementById('annGate').style.display='none';document.getElementById('annPanel').classList.add('visible');err.style.display='none';inp.classList.remove('err')}else{err.style.display='block';inp.classList.add('err')}}
+document.getElementById('annPassInput').addEventListener('keydown',e=>{if(e.key==='Enter')tryLogin()});
+function logout(){document.getElementById('annGate').style.display='';document.getElementById('annPanel').classList.remove('visible');document.getElementById('annPassInput').value=''}
+function renderAnns(){const list=document.getElementById('annList'),empty=document.getElementById('annEmpty');list.innerHTML='';if(!anns.length){list.appendChild(empty);return}const isAdmin=document.getElementById('annPanel').classList.contains('visible');[...anns].reverse().forEach((a,ri)=>{const i=anns.length-1-ri;const card=document.createElement('div');card.className='ann-card';const bc={update:'pill-update',release:'pill-release',maintenance:'pill-maintenance',general:'pill-general'}[a.type]||'pill-general';card.innerHTML=`<div class="ann-card-head"><span class="ann-type-pill ${bc}">${a.type}</span><span class="ann-time">${a.date}</span>${isAdmin?`<button class="ann-del" onclick="delAnn(${i})">&#x2715;</button>`:''}</div><div class="ann-title-txt">${a.title}</div><div class="ann-body-txt">${a.body}</div>`;list.appendChild(card)})}
+function postAnn(){const title=document.getElementById('annTitle').value.trim(),body=document.getElementById('annBody').value.trim(),type=document.getElementById('annType').value;if(!title||!body){alert('Fill in title and message.');return}const now=new Date(),date=now.toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'})+' '+now.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});anns.push({title,body,type,date});saveAnns();document.getElementById('annTitle').value='';document.getElementById('annBody').value='';renderAnns()}
+function delAnn(i){if(!confirm('Delete?'))return;anns.splice(i,1);saveAnns();renderAnns()}
+function clearAnns(){if(!confirm('Delete all?'))return;anns=[];saveAnns();renderAnns()}
+renderAnns();
+</script>
+</body>
+</html>
